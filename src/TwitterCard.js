@@ -22,7 +22,7 @@ export default class TwitterCard {
     this.userName = tweet.user.name;
     this.userImage = tweet.user.profile_image_url_https;
     this.userHandle = tweet.user.screen_name;
-    this.color = tweet.user.profile_background_color || 0xff0000;
+    this.color = parseInt(tweet.user.profile_background_color, 16) || 0xff0000;
 
     this._makeMesh();
   }

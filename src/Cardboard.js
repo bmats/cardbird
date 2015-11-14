@@ -107,7 +107,9 @@ export default class Cardboard {
       this._lastSector = sector;
 
       console.log('scroll pos', this._scrollPos);
-      this.updateCards();
+      if (this._cards) {
+        this.updateCards();
+      }
     }
 
     this._controls.update(dt);
@@ -134,6 +136,7 @@ export default class Cardboard {
 
   set cards(cards) {
     this._cards = cards;
+    console.log('got cards', cards.length);
 
     _.forEach(this._cards, card => {
       card.sectorIndex = undefined;
