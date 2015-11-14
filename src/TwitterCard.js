@@ -18,17 +18,18 @@ function makePlane(width = 10, height = 10, matOptions = {}) {
 
 export default class TwitterCard {
   constructor(tweet) {
-    this._text = tweet.text;
-    this._userName = tweet.user.name;
-    this._userImage = tweet.user.profile_image_url_https;
-    this._userHandle = tweet.user.screen_name;
+    this.text = tweet.text;
+    this.userName = tweet.user.name;
+    this.userImage = tweet.user.profile_image_url_https;
+    this.userHandle = tweet.user.screen_name;
+    this.color = tweet.user.profile_background_color || 0xff0000;
 
     this._makeMesh();
   }
 
   _makeMesh() {
     let backPlane = makePlane(10, 10, {
-      color: 0xff0000 // TODO: user profile color
+      color: this.color
     });
     backPlane.rotation.y = -Math.PI * 0.5;
 
@@ -40,7 +41,7 @@ export default class TwitterCard {
 
         ctx.font = 'bold 40px Arial';
         ctx.fillStyle = 'white';
-        ctx.fillText(this._text, 20, 50);
+        ctx.fillText(this.text, 20, 50);
       }),
       transparent: true
     });
@@ -49,7 +50,7 @@ export default class TwitterCard {
     textPlane.applyMatrix(backPlane.matrixWorld);
 
     let profilePlane = makePlane(3, 3, {
-      map: THREE.ImageUtils.loadTexture(this._userImage)
+      map: THREE.ImageUtils.loadTexture(this.userImage)
     });
     profilePlane.position.set(8, 0, 0.8);
     backPlane.add(profilePlane);
