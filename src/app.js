@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import Cardboard from './Cardboard';
+import Cardbird from './Cardbird';
 import TwitterCard from './TwitterCard';
 import TwitterProvider from './TwitterProvider';
 
@@ -16,7 +16,7 @@ import TwitterProvider from './TwitterProvider';
 //   }
 // }, false);
 
-var demo = new Cardboard();
+var demo = new Cardbird();
 demo.animate();
 
 // var home = [];
