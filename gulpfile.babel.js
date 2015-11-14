@@ -10,23 +10,18 @@ gulp.task('browserify', () => {
     // .on('error', (e) => console.err(e))
     .bundle()
     .pipe(source('bundle.js')) // output filename
-    .pipe(gulp.dest('build'));
+    .pipe(gulp.dest('build'))
+    .pipe(connect.reload());
 });
 
 gulp.task('watch', () => {
-  gulp.watch('src/**/*.js', ['browserify', 'reload']);
+  gulp.watch('src/**/*.js', ['browserify']);
 });
 
 gulp.task('connect', () => {
   connect.server({
     livereload: true
   });
-});
-
-gulp.task('reload', () => {
-  // TODO: watch keeps rebuilding
-  // gulp.src('src/**/*.js')
-  //   .pipe(connect.reload());
 });
 
 gulp.task('build', ['browserify']);
