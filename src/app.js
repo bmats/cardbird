@@ -23,25 +23,21 @@ import TwitterProvider from './TwitterProvider';
 //   .catch(e => alert('Error: ' + e));
 
 var home = [
-  {
-    text: 'Hello world',
-    user: {
-      name: 'Bryce',
-      screen_name: 'binarycaveman',
-      profile_image_url_https: 'https://abs.twimg.com/sticky/default_profile_images/default_profile_0_bigger.png'
-    }
-  },
-  {
-    text: 'Hello again',
-    user: {
-      name: 'Bryce',
-      screen_name: 'binarycaveman',
-      profile_image_url_https: 'https://abs.twimg.com/sticky/default_profile_images/default_profile_0_bigger.png'
-    }
-  }
 ];
+
+for (var i = 0; i < 10; ++i) {
+  home[i] = {
+    text: 'This is text #' + i,
+    user: {
+      name: 'Bryce',
+      screen_name: 'binarycaveman',
+      profile_image_url_https: 'https://abs.twimg.com/sticky/default_profile_images/default_profile_0_bigger.png'
+    }
+  };
+}
+
 var cards = _.map(home, tweet => new TwitterCard(tweet));
 
 var c = new Cardboard();
-c.set(cards);
+c.cards = cards;
 c.animate();
