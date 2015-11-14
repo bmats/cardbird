@@ -1,11 +1,14 @@
 import _ from 'lodash';
 
 const VISIBLE_CARDS = 6; // > 4
-const CARD_DISTANCE = 10;
+const CARD_DISTANCE = 15;
 
 export default class Cardboard {
   constructor() {
     this._renderer = new THREE.WebGLRenderer();
+    this._renderer.setClearColor(0x66ccff, 1);
+    this._renderer.setPixelRatio(window.devicePixelRatio);
+
     let element = this._renderer.domElement;
     this._container = document.querySelector('#container');
     this._container.appendChild(element);
@@ -108,7 +111,7 @@ export default class Cardboard {
 
       console.log('scroll pos', this._scrollPos);
       if (this._cards) {
-        this.updateCards();
+        this._updateCards();
       }
     }
 
@@ -143,9 +146,11 @@ export default class Cardboard {
       card.hide();
       this._scene.add(card.mesh);
     });
+
+    this._updateCards();
   }
 
-  updateCards() {
+  _updateCards() {
     _.forEach(this._cards, card => card.hide());
 
     let i = this._scrollPos - Math.floor(VISIBLE_CARDS / 2);//(this._scrollPos % VISIBLE_CARDS);\

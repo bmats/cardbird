@@ -3,18 +3,25 @@ import Cardbird from './Cardbird';
 import TwitterCard from './TwitterCard';
 import TwitterProvider from './TwitterProvider';
 
-// let container = document.getElementById('container');
-// container.addEventListener('click', () => {
-//   if (container.requestFullscreen) {
-//     container.requestFullscreen();
-//   } else if (container.msRequestFullscreen) {
-//     container.msRequestFullscreen();
-//   } else if (container.mozRequestFullScreen) {
-//     container.mozRequestFullScreen();
-//   } else if (container.webkitRequestFullscreen) {
-//     container.webkitRequestFullscreen();
-//   }
-// }, false);
+let container = document.getElementById('container');
+let isFullscreen = false;
+container.addEventListener('touchend', () => {
+  if (isFullscreen) {
+    window.location.reload(); // TEMP: for debugging
+    return;
+  }
+
+  isFullscreen = true;
+  if (container.requestFullscreen) {
+    container.requestFullscreen();
+  } else if (container.msRequestFullscreen) {
+    container.msRequestFullscreen();
+  } else if (container.mozRequestFullScreen) {
+    container.mozRequestFullScreen();
+  } else if (container.webkitRequestFullscreen) {
+    container.webkitRequestFullscreen();
+  }
+}, false);
 
 var demo = new Cardbird();
 demo.animate();
@@ -39,4 +46,4 @@ twitter.connect()
     let cards = _.map(home, tweet => new TwitterCard(tweet));
     demo.cards = cards;
   })
-  .catch(e => alert('Error: ' + e));
+  .catch(e => console.error('Error: ' + e));
