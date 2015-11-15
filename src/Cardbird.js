@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-const VISIBLE_CARDS = 6; // > 4
+const VISIBLE_CARDS = 7; // > 4
 const CARD_DISTANCE = 15;
 
 export default class Cardboard {
@@ -19,6 +19,8 @@ export default class Cardboard {
 
     this._camera = new THREE.PerspectiveCamera(90, 1, 0.001, 700);
     this._scene.add(this._camera);
+
+    this._raycaster = new THREE.Raycaster();
 
     this._controls = new THREE.OrbitControls(this._camera, element);
     // this._controls.rotateUp(Math.PI / 4);
@@ -47,6 +49,8 @@ export default class Cardboard {
     }
     window.addEventListener('deviceorientation', setOrientationControls, true);
 
+    window.addEventListener('touchstart', () => self._touching = true);
+    window.addEventListener('touchend', () => self._touching = false);
 
     let light = new THREE.HemisphereLight(0x777777, 0x000000, 0.6);
     this._scene.add(light);
@@ -119,6 +123,26 @@ export default class Cardboard {
       }
     }
 
+    if (this._intersectables) {
+      this._raycaster.set(this._camera.position, this._camera.getWorldDirection());
+      let intersects = this._raycaster.intersectObjects(this._intersectables);
+      if (intersects.length > 0) {
+        let object = intersects[0].object;
+        if (object !== this._lastIntersection) {
+          if (object.onGaze) object.onGaze();
+          this._lastIntersection = object;
+        }
+
+        if (this._touching) {
+          if (object.onInteract) object.onInteract();
+          this._touching = false;
+        }
+      } else {
+        if (this._lastIntersection) this._lastIntersection.onUngaze();
+        this._lastIntersection = null;
+      }
+    }
+
     this._controls.update(dt);
   }
 
@@ -145,10 +169,13 @@ export default class Cardboard {
     this._cards = cards;
     console.log('got cards', cards.length);
 
+    this._intersectables = [];
+
     _.forEach(this._cards, card => {
       card.sectorIndex = undefined;
       card.hide();
       this._scene.add(card.mesh);
+      Array.prototype.push.apply(this._intersectables, card.intersectables);
     });
 
     this._updateCards();

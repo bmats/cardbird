@@ -3,23 +3,15 @@ import Cardbird from './Cardbird';
 import TwitterCard from './TwitterCard';
 import TwitterProvider from './TwitterProvider';
 
-let container = document.getElementById('container');
-let isFullscreen = false;
-container.addEventListener('touchend', () => {
-  if (isFullscreen) {
-    window.location.reload(); // TEMP: for debugging
-    return;
-  }
-
-  isFullscreen = true;
-  if (container.requestFullscreen) {
-    container.requestFullscreen();
-  } else if (container.msRequestFullscreen) {
-    container.msRequestFullscreen();
-  } else if (container.mozRequestFullScreen) {
-    container.mozRequestFullScreen();
-  } else if (container.webkitRequestFullscreen) {
-    container.webkitRequestFullscreen();
+document.body.addEventListener('touchend', () => {
+  if (document.body.requestFullscreen) {
+    document.body.requestFullscreen();
+  } else if (document.body.msRequestFullscreen) {
+    document.body.msRequestFullscreen();
+  } else if (document.body.mozRequestFullScreen) {
+    document.body.mozRequestFullScreen();
+  } else if (document.body.webkitRequestFullscreen) {
+    document.body.webkitRequestFullscreen();
   }
 }, false);
 

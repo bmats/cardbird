@@ -11,6 +11,14 @@
         margin: 0;
         overflow: hidden;
       }
+      #center {
+        position: absolute;
+        top: 50%;
+        border: 1px solid white;
+        width: 1px;
+        height: 1px;
+        z-index: 1;
+      }
       #container {
         position: absolute;
         top: 0;
@@ -21,6 +29,8 @@
     </style>
   </head>
   <body>
+    <div id="center" style="left:25%"></div>
+    <div id="center" style="left:75%"></div>
     <div id="container"></div>
     <script src="node_modules/three/three.min.js"></script>
     <script src="src/third-party/threejs/StereoEffect.js"></script>

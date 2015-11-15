@@ -65,6 +65,7 @@ export default class TwitterCard {
 
     this.media = _(tweet.entities.media).filter(media => media.type === 'photo').map(media => media.media_url).value();
 
+    this._intersectables = [];
     this._makeMesh();
   }
 
@@ -117,15 +118,23 @@ export default class TwitterCard {
       .multiply(new THREE.Matrix4().makeTranslation(1.75, 0, 0.4));
     userPlane.add(userTextPlane);
 
-    let retweets = this._makeIconPlane('textures/retweet.png', this.retweets);
+    let retweets = this._makeIconPlane('textures/retweet.png', this.retweets,
+      () => console.log('Retweet?'),
+      () => console.log('No retweet'),
+      () => console.log('Retweet!!'));
     retweets.position.set(-1.8, -1.8, 0.5);
     retweets.rotation.set(-0.2, 0.1, 0);
-    let favorites = this._makeIconPlane('textures/favorite.png', this.favorites);
+    let favorites = this._makeIconPlane('textures/favorite.png', this.favorites,
+      () => console.log('Favorite?'),
+      () => console.log('No favorite'),
+      () => console.log('Favorite!!'));
     favorites.position.set(1.8, -1.8, 0.5);
     favorites.rotation.set(-0.2, -0.1, 0);
 
     backPlane.add(retweets);
     backPlane.add(favorites);
+    this._intersectables.push(retweets);
+    this._intersectables.push(favorites);
 
     // Tweet text
     let textPlane = makePlane(9, 5, {
@@ -162,18 +171,15 @@ export default class TwitterCard {
     this._mesh.add(backPlane);
   }
 
-  _makeIconPlane(iconSrc, text) {
+  _makeIconPlane(iconSrc, text, gazeCallback, ungazeCallback, interactCallback) {
     let button = makePlane(1.5, 0.9, {
       color: 0x000000,
       opacity: 0.1,
       transparent: true
     });
-    button.onIntersect = () => {
-      console.log('intersect!');
-    };
-    button.onInteract = () => {
-      console.log('interacted!');
-    };
+    button.onGaze = gazeCallback;
+    button.onUngaze = ungazeCallback;
+    button.onInteract = interactCallback;
 
     let iconPlane = makePlane(0.6, 0.6, {
       map: THREE.ImageUtils.loadTexture(iconSrc),
@@ -213,5 +219,9 @@ export default class TwitterCard {
 
   get mesh() {
     return this._mesh;
+  }
+
+  get intersectables() {
+    return this._intersectables;
   }
 }
