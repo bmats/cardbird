@@ -51,9 +51,7 @@ export default class Cardboard {
     let light = new THREE.HemisphereLight(0x777777, 0x000000, 0.6);
     this._scene.add(light);
 
-    let texture = THREE.ImageUtils.loadTexture(
-      'textures/patterns/checker.png'
-    );
+    let texture = new THREE.Texture();
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat = new THREE.Vector2(50, 50);
@@ -65,6 +63,12 @@ export default class Cardboard {
       shininess: 20,
       shading: THREE.FlatShading,
       map: texture
+    });
+    let loader = new THREE.ImageLoader();
+    loader.crossOrigin = '';
+    loader.load('textures/patterns/checker.png', image => {
+      texture.image = image;
+      texture.needsUpdate = true;
     });
 
     let geometry = new THREE.PlaneGeometry(1000, 1000);
