@@ -61,6 +61,8 @@ export default class Cardboard {
     texture.repeat = new THREE.Vector2(50, 50);
     texture.anisotropy = this._renderer.getMaxAnisotropy();
 
+    THREE.ImageUtils.crossOrigin = '';
+
     // let material = new THREE.MeshPhongMaterial({
     //   // color: 0xffffff,
     //   // specular: 0xffffff,

@@ -4,6 +4,7 @@ import url from 'url';
 const CANVAS_DENSITY = 50;
 
 const loader = new THREE.TextureLoader();
+loader.crossOrigin = '';
 
 export default class TwitterCard {
   constructor(tweet) {
@@ -18,9 +19,16 @@ export default class TwitterCard {
     this.retweets = mainTweet.retweet_count;
     this.favorites = mainTweet.favorite_count;
 
+    var created = new Date(mainTweet.created_at);
+    this.date = created.toDateString();
+
     this.retweetingUser = tweet.retweeted_status ? tweet.user.name : null;
 
     this.media = _(tweet.entities.media).filter(media => media.type === 'photo').map(media => media.media_url).value();
+
+    if (colorDist(this.profileForeground, this.profileBackground) < 0.15) {
+      this.profileForeground = ~this.profileForeground;
+    }
 
     this._intersectables = [];
     this._makeMesh();
@@ -44,7 +52,7 @@ export default class TwitterCard {
 
     // let userImageTexture = new THREE.Texture();
     let userImagePlane = makePlane(2.5, 2.5, {
-      map: THREE.ImageUtils.loadTexture('textures/default.png')
+      map: THREE.ImageUtils.loadTexture(getProxiedImageSrc(this.userImage, 64, 64))
     });
     // loader.load('textures/default.png', image => { // getProxiedImageSrc(this.userImage, 64, 64)
     //   userImageTexture.image = image;
@@ -52,7 +60,7 @@ export default class TwitterCard {
     // });
     userImagePlane.matrixAutoUpdate = false;
     userImagePlane.matrix
-      .multiply(new THREE.Matrix4().makeTranslation(-3, 0.5, 0.5));
+      .multiply(new THREE.Matrix4().makeTranslation(-3.25, 0.5, 0.5));
     userPlane.add(userImagePlane);
 
     let userTextPlane = makePlane(6, 2, {
@@ -72,7 +80,7 @@ export default class TwitterCard {
     });
     userTextPlane.matrixAutoUpdate = false;
     userTextPlane.matrix
-      .multiply(new THREE.Matrix4().makeTranslation(1.75, 0, 0.4));
+      .multiply(new THREE.Matrix4().makeTranslation(1.75, 0, 0.3));
     userPlane.add(userTextPlane);
 
     // Retweet name tag
@@ -101,6 +109,38 @@ export default class TwitterCard {
       backPlane.add(rtNamePlane);
     }
 
+    // Tweet text
+    let textPlane = makePlane(8, 5, {
+      map: renderCanvas((canvas, ctx) => {
+        canvas.width = 8 * CANVAS_DENSITY;
+        canvas.height = 5 * CANVAS_DENSITY;
+
+        ctx.font = '20px Roboto';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = '#222';
+        wrapText(ctx, this.text, 0, 0, canvas.width, 27);
+      }),
+      transparent: true
+    });
+    textPlane.position.set(0, -0.8, 0.2);
+    backPlane.add(textPlane);
+
+    // Metadata - date
+    let metaPlane = makePlane(8, 0.8, {
+      map: renderCanvas((canvas, ctx) => {
+        canvas.width = 8 * CANVAS_DENSITY;
+        canvas.height = 0.8 * CANVAS_DENSITY;
+
+        ctx.font = '18px Roboto';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = '#666';
+        ctx.fillText(this.date, 0, 0);
+      }),
+      transparent: true
+    });
+    metaPlane.position.set(0, -1.1, 0.15);
+    backPlane.add(metaPlane);
+
     // Action buttons
     let retweets = this._makeIconPlane('textures/retweet.png', this.retweets,
       () => console.log('Retweet?'),
@@ -120,33 +160,15 @@ export default class TwitterCard {
     this._intersectables.push(retweets);
     this._intersectables.push(favorites);
 
-    // Tweet text
-    let textPlane = makePlane(9, 5, {
-      map: renderCanvas((canvas, ctx) => {
-        canvas.width = 9 * CANVAS_DENSITY;
-        canvas.height = 5 * CANVAS_DENSITY;
-
-        ctx.font = '20px Roboto';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = '#222';
-        wrapText(ctx, this.text, 20, 50, canvas.width - 40, 27);
-      }),
-      transparent: true
-    });
-    textPlane.position.z = 0.2;
-    backPlane.add(textPlane);
-
     if (this.media.length > 0) {
-      let imageTexture = new THREE.Texture();
+      // let imageTexture = new THREE.Texture();
       let imagePlane = makePlane(4, 4, {
-        color: 0xff0000,
-        map: imageTexture
+        map: THREE.ImageUtils.loadTexture(getProxiedImageSrc(this.media[0]))
       });
-      loader.load(getProxiedImageSrc(this.media[0]), image => {
-        console.log(getProxiedImageSrc(this.media[0]));
-        imageTexture.image = image;
-        imageTexture.needsUpdate = true;
-      });
+      // loader.load(getProxiedImageSrc(this.media[0]), image => {
+      //   imageTexture.image = image;
+      //   imageTexture.needsUpdate = true;
+      // });
       imagePlane.position.z = 0.5;
       backPlane.add(imagePlane);
     }
@@ -212,10 +234,11 @@ export default class TwitterCard {
 
 function getProxiedImageSrc(src, width = 256, height = 256) {
   var urlObj = url.parse(src);
-  var queryStr = '';
-  if (width > 0) queryStr += '&width=' + width;
-  if (height > 0) queryStr += '&height=' + height;
-  return 'http://' + urlObj.hostname + '.rsz.io' + urlObj.path + '?format=png&colorspace=rgb' + queryStr;
+  // var queryStr = '';
+  // if (width > 0) queryStr += '&w=' + width;
+  // if (height > 0) queryStr += '&h=' + height;
+  // return 'http://' + urlObj.hostname + '.rsz.io' + urlObj.path + '?format=png&colorspace=rgb' + queryStr;
+  return 'http://71805323.ngrok.io/' + encodeURIComponent(src);
 }
 
 function renderCanvas(graphicsCb) {
@@ -227,6 +250,13 @@ function renderCanvas(graphicsCb) {
   let texture = new THREE.Texture(canvas);
   texture.needsUpdate = true;
   return texture;
+}
+
+function colorDist(c1, c2) {
+  var dr = Math.abs(((c1 >> 4) & 0xff) - ((c2 >> 4) & 0xff));
+  var dg = Math.abs(((c1 >> 2) & 0xff) - ((c2 >> 2) & 0xff));
+  var db = Math.abs((c1 & 0xff) - (c2 & 0xff));
+  return (dr + dg + db) / 3 / 255;
 }
 
 function makePlane(width = 10, height = 10, matOptions = {}) {
