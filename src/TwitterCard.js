@@ -49,6 +49,21 @@ export default class TwitterCard {
     });
     userPlane.rotation.set(0, -Math.PI * 0.5, 0);
     userPlane.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0.2, 0, 0)));
+    let userPlaneRotOut = userPlane.quaternion.clone();
+    let userPlaneRotOver = userPlaneRotOut.clone().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0.2, 0, 0)));
+    this._interactables.push(userPlane);
+    userPlane.onGaze = () =>
+      new TWEEN.Tween({ x: userPlaneRotOut.x, y: userPlaneRotOut.y, z: userPlaneRotOut.z, w: userPlaneRotOut.w })
+        .to({ x: userPlaneRotOver.x, y: userPlaneRotOver.y, z: userPlaneRotOver.z, w: userPlaneRotOver.w }, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onUpdate(function() { userPlane.quaternion.set(this.x, this.y, this.z, this.w); })
+        .start();
+    userPlane.onUngaze = () =>
+      new TWEEN.Tween({ x: userPlaneRotOver.x, y: userPlaneRotOver.y, z: userPlaneRotOver.z, w: userPlaneRotOver.w })
+        .to({ x: userPlaneRotOut.x, y: userPlaneRotOut.y, z: userPlaneRotOut.z, w: userPlaneRotOut.w }, 300)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onUpdate(function() { userPlane.quaternion.set(this.x, this.y, this.z, this.w); })
+        .start();
     userPlane.position.set(0, 4, 0);
 
     let userImagePlane = makePlane(2.5, 2.5, {
@@ -139,14 +154,10 @@ export default class TwitterCard {
 
     // Action buttons
     let retweets = this._makeIconPlane('textures/retweet.png', this.retweets,
-      () => console.log('Retweet?'),
-      () => console.log('No retweet'),
       () => console.log('Retweet!!'));
     retweets.position.set(-1.8, -1.8, 0.5);
     retweets.rotation.set(-0.2, 0.1, 0);
     let favorites = this._makeIconPlane('textures/favorite.png', this.favorites,
-      () => console.log('Favorite?'),
-      () => console.log('No favorite'),
       () => console.log('Favorite!!'));
     favorites.position.set(1.8, -1.8, 0.5);
     favorites.rotation.set(-0.2, -0.1, 0);
@@ -163,7 +174,7 @@ export default class TwitterCard {
       });
       imagePlane.onGaze = () =>
         new TWEEN.Tween({ scale: imagePlane.scale.x })
-          .to({ scale: 1.5 }, 300)
+          .to({ scale: 1.8 }, 300)
           .easing(TWEEN.Easing.Quadratic.InOut)
           .onUpdate(function() { imagePlane.scale.set(this.scale, this.scale, 1); })
           .start();
@@ -183,14 +194,24 @@ export default class TwitterCard {
     this._mesh.add(backPlane);
   }
 
-  _makeIconPlane(iconSrc, text, gazeCallback, ungazeCallback, interactCallback) {
+  _makeIconPlane(iconSrc, text, interactCallback) {
     let button = makePlane(1.5, 0.9, {
       color: 0x000000,
       opacity: 0.1,
       transparent: true
     });
-    button.onGaze = gazeCallback;
-    button.onUngaze = ungazeCallback;
+    button.onGaze = () =>
+      new TWEEN.Tween({ scale: button.scale.x })
+        .to({ scale: 1.2 }, 200)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onUpdate(function() { button.scale.set(this.scale, this.scale, 1); })
+        .start();
+    button.onUngaze = () =>
+      new TWEEN.Tween({ scale: button.scale.x })
+        .to({ scale: 1.0 }, 200)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onUpdate(function() { button.scale.set(this.scale, this.scale, 1); })
+        .start();
     button.onInteract = interactCallback;
 
     let iconPlane = makePlane(0.6, 0.6, {

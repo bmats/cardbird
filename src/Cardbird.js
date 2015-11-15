@@ -24,7 +24,6 @@ export default class Cardboard {
     this._raycaster = new THREE.Raycaster();
 
     this._controls = new THREE.OrbitControls(this._camera, element);
-    // this._controls.rotateUp(Math.PI / 4);
     this._controls.target.set(
       this._camera.position.x + 0.1,
       this._camera.position.y,
