@@ -52,8 +52,8 @@ export default class Cardboard {
     window.addEventListener('touchstart', () => self._touching = true);
     window.addEventListener('touchend', () => self._touching = false);
 
-    let light = new THREE.HemisphereLight(0x777777, 0x000000, 0.6);
-    this._scene.add(light);
+    // let light = new THREE.HemisphereLight(0x777777, 0x000000, 0.6);
+    // this._scene.add(light);
 
     let texture = new THREE.Texture();
     texture.wrapS = THREE.RepeatWrapping;
@@ -61,26 +61,24 @@ export default class Cardboard {
     texture.repeat = new THREE.Vector2(50, 50);
     texture.anisotropy = this._renderer.getMaxAnisotropy();
 
-    let material = new THREE.MeshPhongMaterial({
-      color: 0xffffff,
-      specular: 0xffffff,
-      shininess: 20,
-      shading: THREE.FlatShading,
-      map: texture
-    });
-    let loader = new THREE.ImageLoader();
-    loader.crossOrigin = '';
-    loader.load('textures/patterns/checker.png', image => {
-      texture.image = image;
-      texture.needsUpdate = true;
-    });
-
-    let geometry = new THREE.PlaneGeometry(1000, 1000);
-
-    let mesh = new THREE.Mesh(geometry, material);
-    mesh.position.y = -10;
-    mesh.rotation.x = -Math.PI / 2;
-    this._scene.add(mesh);
+    // let material = new THREE.MeshPhongMaterial({
+    //   // color: 0xffffff,
+    //   // specular: 0xffffff,
+    //   shininess: 0,
+    //   shading: THREE.FlatShading,
+    //   map: texture
+    // });
+    // let loader = new THREE.ImageLoader();
+    // loader.crossOrigin = '';
+    // loader.load('textures/patterns/checker.png', image => {
+    //   texture.image = image;
+    //   texture.needsUpdate = true;
+    // });
+    // let geometry = new THREE.PlaneGeometry(1000, 1000);
+    // let mesh = new THREE.Mesh(geometry, material);
+    // mesh.position.y = -10;
+    // mesh.rotation.x = -Math.PI / 2;
+    // this._scene.add(mesh);
 
     function resize() {
       const width  = self._container.offsetWidth;
@@ -97,6 +95,8 @@ export default class Cardboard {
 
     this._scrollPos = 0;
     this._lastSector = (VISIBLE_CARDS / 2) | 0;
+
+    this._buildBackground();
   }
 
   update(dt) {
@@ -146,19 +146,12 @@ export default class Cardboard {
     this._controls.update(dt);
   }
 
-  // render(dt) {
-  //
-  // }
-
   animate(t) {
     requestAnimationFrame(this.animate.bind(this));
 
     this.update(this._clock.getDelta());
 
-    // _.forEach(this._cards, val => val.mesh.rotation.add());
-
     this._effect.render(this._scene, this._camera);
-    // this.render(this._clock.getDelta());
   }
 
   get cards() {
@@ -198,5 +191,41 @@ export default class Cardboard {
       card.mesh.position.set(Math.cos(angle) * CARD_DISTANCE, 0, Math.sin(angle) * CARD_DISTANCE);
       card.mesh.rotation.set(0, -angle, 0);
     }
+  }
+
+  _buildBackground() {
+    let icoGeom = new THREE.IcosahedronGeometry(30, 1);
+    // Harden normals
+    _.forEach(icoGeom.faces, face => {
+      face.normal = new THREE.Vector3().crossVectors(
+        new THREE.Vector3().subVectors(icoGeom.vertices[face.b], icoGeom.vertices[face.a]),
+        new THREE.Vector3().subVectors(icoGeom.vertices[face.c], icoGeom.vertices[face.b])
+      );
+      face.vertexNormals[0] = face.normal;
+      face.vertexNormals[1] = face.normal;
+      face.vertexNormals[2] = face.normal;
+    });
+    icoGeom.normalsNeedUpdate = true;
+
+    let ico = new THREE.Mesh(icoGeom, new THREE.MeshPhongMaterial({
+      color: 0x156289,
+      emissive: 0x072534,
+      side: THREE.BackSide
+    }));
+    ico.rotation.set(0.5, 0.6, 0.7); // randomy triangles
+    this._scene.add(ico);
+
+    // From demo
+    var lights = [
+      new THREE.PointLight(0xffffff, 1, 0),
+      new THREE.PointLight(0xffffff, 1, 0),
+      new THREE.PointLight(0xffffff, 1, 0)
+    ];
+    lights[0].position.set(0, 200, 0);
+    lights[1].position.set(100, 200, 100);
+    lights[2].position.set(-100, -200, -100);
+    this._scene.add(lights[0]);
+    this._scene.add(lights[1]);
+    this._scene.add(lights[2]);
   }
 }
