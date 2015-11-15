@@ -3,65 +3,22 @@ import url from 'url';
 
 const CANVAS_DENSITY = 50;
 
-function getProxiedImageSrc(src, width = 256, height = 256) {
-  var urlObj = url.parse(src);
-  var queryStr = '';
-  if (width > 0) queryStr += '&width=' + width;
-  if (height > 0) queryStr += '&height=' + height;
-  return 'http://' + urlObj.hostname + '.rsz.io' + urlObj.path + '?format=png&colorspace=rgb' + queryStr;
-}
-
-function renderCanvas(graphicsCb) {
-  let canvas = document.createElement('canvas');
-
-  let ctx = canvas.getContext('2d');
-  graphicsCb(canvas, ctx);
-
-  let texture = new THREE.Texture(canvas);
-  texture.needsUpdate = true;
-  return texture;
-}
-
-function makePlane(width = 10, height = 10, matOptions = {}) {
-  let geom = new THREE.PlaneGeometry(width, height);
-  let mat = new THREE.MeshBasicMaterial(matOptions);
-  let plane = new THREE.Mesh(geom, mat);
-  return plane;
-}
-
-function wrapText(context, text, x, y, maxWidth, lineHeight) {
-  var words = text.split(' ');
-  var line = '';
-
-  for(var n = 0; n < words.length; n++) {
-    var testLine = line + words[n] + ' ';
-    var metrics = context.measureText(testLine);
-    var testWidth = metrics.width;
-    if (testWidth > maxWidth && n > 0) {
-      context.fillText(line, x, y);
-      line = words[n] + ' ';
-      y += lineHeight;
-    }
-    else {
-      line = testLine;
-    }
-  }
-  context.fillText(line, x, y);
-}
-
 const loader = new THREE.TextureLoader();
 
 export default class TwitterCard {
   constructor(tweet) {
-    this.text = tweet.text;
-    this.userName = tweet.user.name;
-    this.userImage = tweet.user.profile_image_url_https.replace('_normal.', '_bigger.');
-    this.userHandle = tweet.user.screen_name;
-    this.profileForeground = parseInt(tweet.user.profile_text_color, 16);
-    this.profileBackground = parseInt(tweet.user.profile_background_color, 16);
-    this.linkColor = parseInt(tweet.user.profile_link_color, 16);
-    this.retweets = tweet.retweeted_status ? tweet.retweeted_status.retweet_count : tweet.retweet_count;
-    this.favorites = tweet.retweeted_status ? tweet.retweeted_status.favorite_count : tweet.favorite_count;
+    var mainTweet = tweet.retweeted_status ? tweet.retweeted_status : tweet;
+    this.text = mainTweet.text;
+    this.userName = mainTweet.user.name;
+    this.userImage = mainTweet.user.profile_image_url_https.replace('_normal.', '_bigger.');
+    this.userHandle = mainTweet.user.screen_name;
+    this.profileForeground = parseInt(mainTweet.user.profile_text_color, 16);
+    this.profileBackground = parseInt(mainTweet.user.profile_background_color, 16);
+    this.linkColor = parseInt(mainTweet.user.profile_link_color, 16);
+    this.retweets = mainTweet.retweet_count;
+    this.favorites = mainTweet.favorite_count;
+
+    this.retweetingUser = tweet.retweeted_status ? tweet.user.name : null;
 
     this.media = _(tweet.entities.media).filter(media => media.type === 'photo').map(media => media.media_url).value();
 
@@ -118,6 +75,33 @@ export default class TwitterCard {
       .multiply(new THREE.Matrix4().makeTranslation(1.75, 0, 0.4));
     userPlane.add(userTextPlane);
 
+    // Retweet name tag
+    if (this.retweetingUser) {
+      let rtNamePlane = makePlane(8, 0.8, {
+        map: renderCanvas((canvas, ctx) => {
+          canvas.width = 8 * CANVAS_DENSITY;
+          canvas.height = 0.8 * CANVAS_DENSITY;
+
+          ctx.font = '30px Roboto';
+          ctx.textBaseline = 'top';
+          ctx.textAlign = 'right';
+          let text = this.retweetingUser + ' retweeted';
+          let metrics = ctx.measureText(text);
+
+          ctx.fillStyle = '#eee';
+          ctx.fillRect(canvas.width - metrics.width - 10, 0, metrics.width + 10, 40);
+
+          ctx.fillStyle = '#333';
+          ctx.fillText(text, canvas.width - 5, 5);
+        }),
+        transparent: true
+      });
+      rtNamePlane.position.set(2.5, 5.5, 0.5);
+      rtNamePlane.rotation.z = -0.08;
+      backPlane.add(rtNamePlane);
+    }
+
+    // Action buttons
     let retweets = this._makeIconPlane('textures/retweet.png', this.retweets,
       () => console.log('Retweet?'),
       () => console.log('No retweet'),
@@ -196,7 +180,7 @@ export default class TwitterCard {
         ctx.fillStyle = '#333';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this.retweets.toString(), canvas.width * 0.5, canvas.height * 0.5);
+        ctx.fillText(text, canvas.width * 0.5, canvas.height * 0.5);
       }),
       transparent: true
     });
@@ -224,4 +208,50 @@ export default class TwitterCard {
   get intersectables() {
     return this._intersectables;
   }
+}
+
+function getProxiedImageSrc(src, width = 256, height = 256) {
+  var urlObj = url.parse(src);
+  var queryStr = '';
+  if (width > 0) queryStr += '&width=' + width;
+  if (height > 0) queryStr += '&height=' + height;
+  return 'http://' + urlObj.hostname + '.rsz.io' + urlObj.path + '?format=png&colorspace=rgb' + queryStr;
+}
+
+function renderCanvas(graphicsCb) {
+  let canvas = document.createElement('canvas');
+
+  let ctx = canvas.getContext('2d');
+  graphicsCb(canvas, ctx);
+
+  let texture = new THREE.Texture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function makePlane(width = 10, height = 10, matOptions = {}) {
+  let geom = new THREE.PlaneGeometry(width, height);
+  let mat = new THREE.MeshBasicMaterial(matOptions);
+  let plane = new THREE.Mesh(geom, mat);
+  return plane;
+}
+
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+  var words = text.split(' ');
+  var line = '';
+
+  for(var n = 0; n < words.length; n++) {
+    var testLine = line + words[n] + ' ';
+    var metrics = context.measureText(testLine);
+    var testWidth = metrics.width;
+    if (testWidth > maxWidth && n > 0) {
+      context.fillText(line, x, y);
+      line = words[n] + ' ';
+      y += lineHeight;
+    }
+    else {
+      line = testLine;
+    }
+  }
+  context.fillText(line, x, y);
 }

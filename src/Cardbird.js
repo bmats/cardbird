@@ -6,7 +6,7 @@ const CARD_DISTANCE = 15;
 export default class Cardboard {
   constructor() {
     this._renderer = new THREE.WebGLRenderer();
-    this._renderer.setClearColor(0x66ccff, 1);
+    this._renderer.setClearColor(0xffffff, 1);
     this._renderer.setPixelRatio(window.devicePixelRatio);
 
     let element = this._renderer.domElement;
