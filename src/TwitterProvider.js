@@ -26,7 +26,7 @@ export default class TwitterProvider {
     });
   }
 
-  getFeed(count = 30) {
+  getFeed(count = 50) {
     return new Promise((resolve, reject) => {
       this._oauthResult.get('https://api.twitter.com/1.1/statuses/home_timeline.json?count=' + count).done(resolve).fail(e => {
         console.error(e);
