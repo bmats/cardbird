@@ -1,10 +1,11 @@
 import _ from 'lodash';
+import TWEEN from 'tween.js';
 import url from 'url';
 
 const CANVAS_DENSITY = 50;
 
 const loader = new THREE.TextureLoader();
-loader.crossOrigin = '';
+loader.setCrossOrigin('');
 
 export default class TwitterCard {
   constructor(tweet) {
@@ -24,13 +25,13 @@ export default class TwitterCard {
 
     this.retweetingUser = tweet.retweeted_status ? tweet.user.name : null;
 
-    this.media = _(tweet.entities.media).filter(media => media.type === 'photo').map(media => media.media_url).value();
+    this.media = _(tweet.entities.media).filter(media => media.type === 'photo').map(media => media.media_url_https).value();
 
     if (colorDist(this.profileForeground, this.profileBackground) < 0.15) {
       this.profileForeground = ~this.profileForeground;
     }
 
-    this._intersectables = [];
+    this._interactables = [];
     this._makeMesh();
   }
 
@@ -50,14 +51,9 @@ export default class TwitterCard {
     userPlane.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0.2, 0, 0)));
     userPlane.position.set(0, 4, 0);
 
-    // let userImageTexture = new THREE.Texture();
     let userImagePlane = makePlane(2.5, 2.5, {
-      map: THREE.ImageUtils.loadTexture(getProxiedImageSrc(this.userImage, 64, 64))
+      map: loader.load(getProxiedImageSrc(this.userImage, 64, 64))
     });
-    // loader.load('textures/default.png', image => { // getProxiedImageSrc(this.userImage, 64, 64)
-    //   userImageTexture.image = image;
-    //   userImageTexture.needsUpdate = true;
-    // });
     userImagePlane.matrixAutoUpdate = false;
     userImagePlane.matrix
       .multiply(new THREE.Matrix4().makeTranslation(-3.25, 0.5, 0.5));
@@ -157,21 +153,31 @@ export default class TwitterCard {
 
     backPlane.add(retweets);
     backPlane.add(favorites);
-    this._intersectables.push(retweets);
-    this._intersectables.push(favorites);
+    this._interactables.push(retweets);
+    this._interactables.push(favorites);
 
-    if (this.media.length > 0) {
-      // let imageTexture = new THREE.Texture();
-      let imagePlane = makePlane(4, 4, {
-        map: THREE.ImageUtils.loadTexture(getProxiedImageSrc(this.media[0]))
+    _.forEach(this.media, (photo, i) => {
+      let imagePlane = makePlane(6, 6, {
+        map: loader.load(getProxiedImageSrc(this.media[0]), texture =>
+          imagePlane.geometry.scale(1, texture.image.height / texture.image.width, 1))
       });
-      // loader.load(getProxiedImageSrc(this.media[0]), image => {
-      //   imageTexture.image = image;
-      //   imageTexture.needsUpdate = true;
-      // });
-      imagePlane.position.z = 0.5;
+      imagePlane.onGaze = () =>
+        new TWEEN.Tween({ scale: imagePlane.scale.x })
+          .to({ scale: 1.5 }, 300)
+          .easing(TWEEN.Easing.Quadratic.InOut)
+          .onUpdate(function() { imagePlane.scale.set(this.scale, this.scale, 1); })
+          .start();
+      imagePlane.onUngaze = () =>
+        new TWEEN.Tween({ scale: imagePlane.scale.x })
+          .to({ scale: 1.0 }, 300)
+          .easing(TWEEN.Easing.Quadratic.InOut)
+          .onUpdate(function() { imagePlane.scale.set(this.scale, this.scale, 1); })
+          .start();
+      this._interactables.push(imagePlane);
+      imagePlane.position.set(0, -6.5, 2.5 - 1 * i);
+      imagePlane.rotation.x = -0.3;
       backPlane.add(imagePlane);
-    }
+    });
 
     this._mesh.add(userPlane);
     this._mesh.add(backPlane);
@@ -188,7 +194,7 @@ export default class TwitterCard {
     button.onInteract = interactCallback;
 
     let iconPlane = makePlane(0.6, 0.6, {
-      map: THREE.ImageUtils.loadTexture(iconSrc),
+      map: loader.load(iconSrc),
       transparent: true
     });
     iconPlane.position.set(-0.3, 0, 0.1);
@@ -227,8 +233,8 @@ export default class TwitterCard {
     return this._mesh;
   }
 
-  get intersectables() {
-    return this._intersectables;
+  get interactables() {
+    return this._interactables;
   }
 }
 

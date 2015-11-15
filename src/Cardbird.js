@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import TWEEN from 'tween.js';
 
 const VISIBLE_CARDS = 7; // > 4
 const CARD_DISTANCE = 15;
@@ -125,9 +126,9 @@ export default class Cardboard {
       }
     }
 
-    if (this._intersectables) {
+    if (this._interactables) {
       this._raycaster.set(this._camera.position, this._camera.getWorldDirection());
-      let intersects = this._raycaster.intersectObjects(this._intersectables);
+      let intersects = this._raycaster.intersectObjects(this._interactables);
       if (intersects.length > 0) {
         let object = intersects[0].object;
         if (object !== this._lastIntersection) {
@@ -152,6 +153,7 @@ export default class Cardboard {
     requestAnimationFrame(this.animate.bind(this));
 
     this.update(this._clock.getDelta());
+    TWEEN.update();
 
     this._effect.render(this._scene, this._camera);
   }
@@ -164,13 +166,13 @@ export default class Cardboard {
     this._cards = cards;
     console.log('got cards', cards.length);
 
-    this._intersectables = [];
+    this._interactables = [];
 
     _.forEach(this._cards, card => {
       card.sectorIndex = undefined;
       card.hide();
       this._scene.add(card.mesh);
-      Array.prototype.push.apply(this._intersectables, card.intersectables);
+      Array.prototype.push.apply(this._interactables, card.interactables);
     });
 
     this._updateCards();
