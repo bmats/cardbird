@@ -18,19 +18,6 @@ document.body.addEventListener('touchend', () => {
 var demo = new Cardbird();
 demo.animate();
 
-// var home = [];
-// for (var i = 0; i < 10; ++i) {
-//   home[i] = {
-//     text: 'This is text #' + i,
-//     user: {
-//       name: 'Bryce',
-//       screen_name: 'binarycaveman',
-//       profile_image_url_https: 'https://abs.twimg.com/sticky/default_profile_images/default_profile_0_bigger.png'
-//     }
-//   };
-// }
-// demo.cards = home;
-
 let twitter = new TwitterProvider();
 let lastId = 0;
 twitter.connect()

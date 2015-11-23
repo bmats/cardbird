@@ -55,9 +55,6 @@ class Cardbird extends events.EventEmitter {
     window.addEventListener('touchstart', () => self._touching = true);
     window.addEventListener('touchend', () => self._touching = false);
 
-    // let light = new THREE.HemisphereLight(0x777777, 0x000000, 0.6);
-    // this._scene.add(light);
-
     let texture = new THREE.Texture();
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -65,25 +62,6 @@ class Cardbird extends events.EventEmitter {
     texture.anisotropy = this._renderer.getMaxAnisotropy();
 
     THREE.ImageUtils.crossOrigin = '';
-
-    // let material = new THREE.MeshPhongMaterial({
-    //   // color: 0xffffff,
-    //   // specular: 0xffffff,
-    //   shininess: 0,
-    //   shading: THREE.FlatShading,
-    //   map: texture
-    // });
-    // let loader = new THREE.ImageLoader();
-    // loader.crossOrigin = '';
-    // loader.load('textures/patterns/checker.png', image => {
-    //   texture.image = image;
-    //   texture.needsUpdate = true;
-    // });
-    // let geometry = new THREE.PlaneGeometry(1000, 1000);
-    // let mesh = new THREE.Mesh(geometry, material);
-    // mesh.position.y = -10;
-    // mesh.rotation.x = -Math.PI / 2;
-    // this._scene.add(mesh);
 
     function resize() {
       const width  = self._container.offsetWidth;
@@ -109,7 +87,6 @@ class Cardbird extends events.EventEmitter {
   }
 
   update(dt) {
-    // this.resize();
     this._camera.updateProjectionMatrix();
     let cameraDirection = this._camera.getWorldDirection();
     let cameraAngle = Math.atan2(cameraDirection.z, cameraDirection.x) + Math.PI;
