@@ -1,6 +1,3 @@
-import url from 'url';
-import {getQueryVariable} from './util';
-
 export default class TwitterProvider {
   constructor() {
     // this._token       = window.localStorage.getItem('twitter_token');
@@ -26,9 +23,11 @@ export default class TwitterProvider {
     });
   }
 
-  getFeed(count = 50) {
+  getFeed(maxId = 0, count = 50) {
     return new Promise((resolve, reject) => {
-      this._oauthResult.get('https://api.twitter.com/1.1/statuses/home_timeline.json?count=' + count).done(resolve).fail(e => {
+      let endpoint = 'https://api.twitter.com/1.1/statuses/home_timeline.json?count=' + count;
+      if (maxId) endpoint += '&max_id=' + maxId;
+      this._oauthResult.get(endpoint).done(resolve).fail(e => {
         console.error(e);
         reject(e);
       });

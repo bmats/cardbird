@@ -32,10 +32,36 @@ demo.animate();
 // demo.cards = home;
 
 let twitter = new TwitterProvider();
+let lastId = 0;
 twitter.connect()
+  .then(() => console.log('Authenticated with Twitter'))
   .then(() => twitter.getFeed())
   .then(home => {
+    console.log('Got home timeline with ' + home.length + ' items');
     let cards = _.map(home, tweet => new TwitterCard(tweet));
     demo.cards = cards;
+    lastId = _.last(home).id;
   })
-  .catch(e => console.error('Error: ' + e));
+  .catch(e => {
+    console.error(e);
+    alert('Error: ' + e.statusText);
+  });
+
+demo.on('end', () => {
+  console.log('Requesting more cards...');
+  twitter.getFeed(lastId)
+    .then(home => {
+      console.log('Got new home timeline with ' + home.length + ' items');
+
+      // Add more cards to end of array
+      let newCards = _.map(home, tweet => new TwitterCard(tweet));
+      let cards = demo.cards;
+      Array.prototype.push.apply(cards, newCards);
+      demo.cards = cards;
+      lastId = _.last(home).id;
+    })
+    .catch(e => {
+      console.error(e);
+      alert('Error: ' + e.statusText);
+    });
+});

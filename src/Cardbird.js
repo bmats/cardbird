@@ -1,11 +1,14 @@
 import _ from 'lodash';
+import events from 'events';
 import TWEEN from 'tween.js';
 
 const VISIBLE_CARDS = 7; // > 4
 const CARD_DISTANCE = 15;
 
-export default class Cardboard {
+class Cardbird extends events.EventEmitter {
   constructor() {
+    super();
+
     this._renderer = new THREE.WebGLRenderer();
     this._renderer.setClearColor(0xffffff, 1);
     this._renderer.setPixelRatio(window.devicePixelRatio);
@@ -95,8 +98,12 @@ export default class Cardboard {
     window.addEventListener('resize', resize, false);
     setTimeout(resize, 1);
 
+    this._cards = [];
+    this._interactables = [];
+
     this._scrollPos = 0;
     this._lastSector = (VISIBLE_CARDS / 2) | 0;
+    this._reachedEnd = false;
 
     this._buildBackground();
   }
@@ -163,29 +170,33 @@ export default class Cardboard {
 
   set cards(cards) {
     this._cards = cards;
-    console.log('got cards', cards.length);
-
-    this._interactables = [];
 
     _.forEach(this._cards, card => {
+      if (card.added) return;
+
       card.sectorIndex = undefined;
       card.hide();
       this._scene.add(card.mesh);
       Array.prototype.push.apply(this._interactables, card.interactables);
+      card.added = true;
     });
 
     this._updateCards();
   }
 
   _updateCards() {
-    _.forEach(this._cards, card => card.hide());
-
-    let i = this._scrollPos - Math.floor(VISIBLE_CARDS / 2);//(this._scrollPos % VISIBLE_CARDS);\
-    let max = this._scrollPos + (VISIBLE_CARDS - Math.floor(VISIBLE_CARDS / 2));// - (this._scrollPos % VISIBLE_CARDS)
-    i   = Math.min(Math.max(i, 0), this._cards.length);
+    let min = this._scrollPos - Math.floor(VISIBLE_CARDS / 2);
+    let max = this._scrollPos + (VISIBLE_CARDS - Math.floor(VISIBLE_CARDS / 2));
+    min = Math.min(Math.max(min, 0), this._cards.length);
     max = Math.min(Math.max(max, 0), this._cards.length);
 
-    for (; i < max; ++i) {
+    // Hide other cards
+    for (let i = 0; i < min; ++i)
+      this._cards[i].hide();
+    for (let i = max, len = this._cards.length; i < len; ++i)
+      this._cards[i].hide();
+
+    for (let i = min; i < max; ++i) {
       let card = this._cards[i];
       card.show();
       card.sectorIndex = i % VISIBLE_CARDS;
@@ -194,6 +205,13 @@ export default class Cardboard {
       card.mesh.position.set(Math.cos(angle) * CARD_DISTANCE, 0, Math.sin(angle) * CARD_DISTANCE);
       card.mesh.rotation.set(0, -angle, 0);
     }
+
+    // Send end event if we reached the end
+    let atEnd = this._scrollPos > this._cards.length - VISIBLE_CARDS;
+    if (atEnd && !this._reachedEnd) {
+      this.emit('end');
+    }
+    this._reachedEnd = atEnd;
   }
 
   _buildBackground() {
@@ -232,3 +250,5 @@ export default class Cardboard {
     this._scene.add(lights[2]);
   }
 }
+
+export default Cardbird;
