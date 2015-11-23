@@ -1,7 +1,9 @@
 import _ from 'lodash';
 import TWEEN from 'tween.js';
-import url from 'url';
 
+// Set up an image proxy server if Twitter is not returning a blank pixel.
+// getProxiedImageSrc() assumes the server is running https://github.com/jpmckinney/image-proxy.
+const IMAGE_PROXY_SERVER = '';
 const CANVAS_DENSITY = 50;
 
 const loader = new THREE.TextureLoader();
@@ -260,12 +262,10 @@ export default class TwitterCard {
 }
 
 function getProxiedImageSrc(src, width = 256, height = 256) {
-  var urlObj = url.parse(src);
-  // var queryStr = '';
-  // if (width > 0) queryStr += '&w=' + width;
-  // if (height > 0) queryStr += '&h=' + height;
-  // return 'http://' + urlObj.hostname + '.rsz.io' + urlObj.path + '?format=png&colorspace=rgb' + queryStr;
-  return 'http://71805323.ngrok.io/' + encodeURIComponent(src);
+  if (IMAGE_PROXY_SERVER)
+    return IMAGE_PROXY_SERVER + '/' + encodeURIComponent(src) + '/' + width + '/' + height + '.jpg';
+  else
+    return src;
 }
 
 function renderCanvas(graphicsCb) {
